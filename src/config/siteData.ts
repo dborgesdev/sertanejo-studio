@@ -8,8 +8,8 @@ export const SITE_DATA = {
   location: "Apucarana - Paraná",
   instagramHandle: "@radiosertanejofm",
   instagramUrl: "https://instagram.com/radiosertanejofm",
-  streamIframeUrl: "https://player.srvvox.com.br/player-topo-html5/7632/000000",
-  appUrl: "https://player.srvvox.com.br/player-app-multi-plataforma/7632",
+  streamUrl: "https://s03.svrdedicado.org:8046/stream",
+  appUrl: "https://player.svrdedicado.org/player-app-multi-plataforma/8046",
   developerUrl: "https://smartlocal.com.br",
   developerName: "Douglas Borges - Smart Local",
 };
