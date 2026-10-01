@@ -1,5 +1,6 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { motion } from "framer-motion";
+import { Pause, Play, Volume2, VolumeX } from "lucide-react";
 import { SITE_DATA } from "../../config/siteData";
 import { SectionWrapper } from "../ui/SectionWrapper";
 
@@ -14,6 +15,11 @@ const images = [hero1, hero2, hero3, hero4, hero5, hero6];
 
 export function PlayerSection() {
   const [current, setCurrent] = useState(0);
+  const audioRef = useRef<HTMLAudioElement>(null);
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [volume, setVolume] = useState(100);
+  const [songTitle, setSongTitle] = useState("Sertanejo FM — Ao Vivo");
 
   useEffect(() => {
     const timer = setInterval(() => {
@@ -21,6 +27,76 @@ export function PlayerSection() {
     }, 4000);
     return () => clearInterval(timer);
   }, []);
+
+  useEffect(() => {
+    const audio = audioRef.current;
+    if (!audio) return;
+
+    const onPlaying = () => {
+      setIsPlaying(true);
+      setIsLoading(false);
+    };
+    const onPause = () => {
+      setIsPlaying(false);
+      setIsLoading(false);
+    };
+
+    audio.addEventListener("playing", onPlaying);
+    audio.addEventListener("pause", onPause);
+    audio.addEventListener("error", onPause);
+
+    return () => {
+      audio.removeEventListener("playing", onPlaying);
+      audio.removeEventListener("pause", onPause);
+      audio.removeEventListener("error", onPause);
+    };
+  }, []);
+
+  useEffect(() => {
+    let active = true;
+
+    const fetchNowPlaying = async () => {
+      try {
+        const response = await fetch("/api/now-playing", { cache: "no-store" });
+        if (!response.ok) return;
+
+        const data = (await response.json()) as { songtitle?: string };
+        if (active && data.songtitle) setSongTitle(data.songtitle);
+      } catch {
+        // Metadata is optional; the stream continues even if stats fail.
+      }
+    };
+
+    fetchNowPlaying();
+    const interval = window.setInterval(fetchNowPlaying, 10000);
+
+    return () => {
+      active = false;
+      window.clearInterval(interval);
+    };
+  }, []);
+
+  const togglePlayback = async () => {
+    const audio = audioRef.current;
+    if (!audio) return;
+
+    if (!audio.paused) {
+      audio.pause();
+      return;
+    }
+
+    setIsLoading(true);
+    try {
+      await audio.play();
+    } catch {
+      setIsLoading(false);
+    }
+  };
+
+  const changeVolume = (nextVolume: number) => {
+    setVolume(nextVolume);
+    if (audioRef.current) audioRef.current.volume = nextVolume / 100;
+  };
 
   return (
     <SectionWrapper id="player" tone="wood" glow className="pt-24 pb-20">
@@ -95,14 +171,68 @@ export function PlayerSection() {
             </div>
           </div>
 
-          {/* Base: Player Iframe em Container Dedicado */}
-          <div className="relative bg-[#0a0805] border-t border-[rgba(229,169,60,0.15)]">
-            <iframe
-              src={SITE_DATA.streamIframeUrl}
-              className="h-10 sm:h-20 w-full border-0 rounded-xl"
-              title="Sertanejo FM - Player ao vivo"
-              allow="autoplay"
-            />
+          {/* Base: Player nativo */}
+          <div className="relative bg-[#0a0805] border-t border-[rgba(229,169,60,0.15)] text-white">
+            <audio ref={audioRef} src={SITE_DATA.streamUrl} preload="none" />
+            <div className="flex min-h-20 items-center gap-3 px-3 py-3 sm:gap-4 sm:px-5">
+              <button
+                type="button"
+                onClick={togglePlayback}
+                disabled={isLoading}
+                aria-label={isPlaying ? "Pausar transmissão" : "Ouvir Sertanejo FM"}
+                className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-[#e9ad46] text-[#1a130c] transition-transform hover:scale-105 disabled:cursor-wait disabled:opacity-70 sm:h-14 sm:w-14"
+              >
+                {isLoading ? (
+                  <span className="h-5 w-5 animate-spin rounded-full border-2 border-[#1a130c]/20 border-t-[#1a130c]" />
+                ) : isPlaying ? (
+                  <Pause className="h-5 w-5 fill-current sm:h-6 sm:w-6" />
+                ) : (
+                  <Play className="ml-0.5 h-5 w-5 fill-current sm:h-6 sm:w-6" />
+                )}
+              </button>
+
+              <div className="min-w-0 flex-1">
+                <p className="mb-0.5 text-[10px] font-bold uppercase tracking-[0.18em] text-[#e9ad46]/70 sm:text-xs">
+                  Sertanejo FM
+                </p>
+                <p className="truncate text-sm font-semibold text-white sm:text-lg">
+                  {isLoading ? "Conectando..." : songTitle}
+                </p>
+              </div>
+
+              <div className="hidden items-center gap-2 sm:flex">
+                <span className="relative flex h-2 w-2">
+                  <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-[#e9ad46] opacity-75" />
+                  <span className="relative inline-flex h-2 w-2 rounded-full bg-[#e9ad46]" />
+                </span>
+                <span className="text-[10px] font-black uppercase tracking-widest text-white/60">
+                  Ao vivo
+                </span>
+              </div>
+
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => changeVolume(volume === 0 ? 100 : 0)}
+                  aria-label={volume === 0 ? "Ativar som" : "Silenciar"}
+                  className="text-white/70 transition-colors hover:text-white"
+                >
+                  {volume === 0 ? <VolumeX className="h-5 w-5" /> : <Volume2 className="h-5 w-5" />}
+                </button>
+                <input
+                  aria-label="Volume"
+                  type="range"
+                  min="0"
+                  max="100"
+                  value={volume}
+                  onChange={(event) => changeVolume(Number(event.target.value))}
+                  className="hidden w-20 accent-[#e9ad46] md:block lg:w-28"
+                />
+                <span className="hidden w-8 text-right text-[10px] font-semibold text-white/50 lg:block">
+                  {volume}%
+                </span>
+              </div>
+            </div>
           </div>
         </motion.div>
       </div>
