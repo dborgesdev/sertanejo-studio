@@ -1,6 +1,5 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import { Pause, Play, Volume2, VolumeX } from "lucide-react";
 import { SITE_DATA } from "../../config/siteData";
 import { SectionWrapper } from "../ui/SectionWrapper";
 
@@ -15,22 +14,7 @@ const images = [hero1, hero2, hero3, hero4, hero5, hero6];
 
 export function PlayerSection() {
   const [current, setCurrent] = useState(0);
-  const audioRef = useRef<HTMLAudioElement>(null);
-  const playerSectionRef = useRef<HTMLDivElement>(null);
-  const [isPlaying, setIsPlaying] = useState(false);
-  const [isPlayerVisible, setIsPlayerVisible] = useState(false);
-  const [isPageVisible, setIsPageVisible] = useState(() =>
-    typeof document === "undefined" ? true : !document.hidden,
-  );
-  const [isLoading, setIsLoading] = useState(false);
-  const [volume, setVolume] = useState(100);
-  const [songTitle, setSongTitle] = useState("Sertanejo FM — Ao Vivo");
-
-  useEffect(() => {
-    const timer = setInterval(() => {
-      setCurrent((prev) => (prev + 1) % images.length);
-    }, 4000);
-    return () => clearInterval(timer);
+  return () => clearInterval(timer);
   }, []);
 
   useEffect(() => {
@@ -162,7 +146,6 @@ export function PlayerSection() {
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
           transition={{ delay: 0.2 }}
-          ref={playerSectionRef}
           className="relative rounded-3xl overflow-hidden border border-[rgba(26,19,12,0.3)] shadow-[0_20px_50px_rgba(26,19,12,0.35)] bg-[#0a0805]"
         >
           {/* Topo: Slideshow de Imagens */}
@@ -203,68 +186,14 @@ export function PlayerSection() {
             </div>
           </div>
 
-          {/* Base: Player nativo */}
-          <div className="relative bg-[#0a0805] border-t border-[rgba(229,169,60,0.15)] text-white">
-            <audio ref={audioRef} src={SITE_DATA.streamUrl} preload="none" />
-            <div className="flex min-h-20 items-center gap-3 px-3 py-3 sm:gap-4 sm:px-5">
-              <button
-                type="button"
-                onClick={togglePlayback}
-                disabled={isLoading}
-                aria-label={isPlaying ? "Pausar transmissão" : "Ouvir Sertanejo FM"}
-                className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-[#e9ad46] text-coffee-medium transition-transform hover:scale-105 disabled:cursor-wait disabled:opacity-70 sm:h-14 sm:w-14"
-              >
-                {isLoading ? (
-                  <span className="h-5 w-5 animate-spin rounded-full border-2 border-coffee-medium/20 border-t-coffee-medium" />
-                ) : isPlaying ? (
-                  <Pause className="h-5 w-5 fill-current sm:h-6 sm:w-6" />
-                ) : (
-                  <Play className="ml-0.5 h-5 w-5 fill-current sm:h-6 sm:w-6" />
-                )}
-              </button>
-
-              <div className="min-w-0 flex-1">
-                <p className="mb-0.5 text-[10px] font-bold uppercase tracking-[0.18em] text-[#e9ad46]/70 sm:text-xs">
-                  Sertanejo FM
-                </p>
-                <p className="truncate text-sm font-semibold text-white sm:text-lg">
-                  {isLoading ? "Conectando..." : songTitle}
-                </p>
-              </div>
-
-              <div className="hidden items-center gap-2 sm:flex">
-                <span className="relative flex h-2 w-2">
-                  <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-[#e9ad46] opacity-75" />
-                  <span className="relative inline-flex h-2 w-2 rounded-full bg-[#e9ad46]" />
-                </span>
-                <span className="text-[10px] font-black uppercase tracking-widest text-white/60">
-                  Ao vivo
-                </span>
-              </div>
-
-              <div className="flex items-center gap-2">
-                <button
-                  type="button"
-                  onClick={() => changeVolume(volume === 0 ? 100 : 0)}
-                  aria-label={volume === 0 ? "Ativar som" : "Silenciar"}
-                  className="text-white/70 transition-colors hover:text-white"
-                >
-                  {volume === 0 ? <VolumeX className="h-5 w-5" /> : <Volume2 className="h-5 w-5" />}
-                </button>
-                <input
-                  aria-label="Volume"
-                  type="range"
-                  min="0"
-                  max="100"
-                  value={volume}
-                  onChange={(event) => changeVolume(Number(event.target.value))}
-                  className="hidden w-20 accent-[#e9ad46] md:block lg:w-28"
-                />
-                <span className="hidden w-8 text-right text-[10px] font-semibold text-white/50 lg:block">
-                  {volume}%
-                </span>
-              </div>
-            </div>
+          {/* Base: Player oficial via iframe */}
+          <div className="relative bg-[#0a0805] border-t border-[rgba(229,169,60,0.15)]">
+            <iframe
+              src={SITE_DATA.streamIframeUrl}
+              className="h-20 w-full border-0"
+              title="Sertanejo FM - Player ao vivo"
+              allow="autoplay"
+            />
           </div>
         </motion.div>
       </div>
