@@ -16,7 +16,12 @@ const images = [hero1, hero2, hero3, hero4, hero5, hero6];
 export function PlayerSection() {
   const [current, setCurrent] = useState(0);
   const audioRef = useRef<HTMLAudioElement>(null);
+  const playerSectionRef = useRef<HTMLDivElement>(null);
   const [isPlaying, setIsPlaying] = useState(false);
+  const [isPlayerVisible, setIsPlayerVisible] = useState(false);
+  const [isPageVisible, setIsPageVisible] = useState(() =>
+    typeof document === "undefined" ? true : !document.hidden,
+  );
   const [isLoading, setIsLoading] = useState(false);
   const [volume, setVolume] = useState(100);
   const [songTitle, setSongTitle] = useState("Sertanejo FM — Ao Vivo");
@@ -53,6 +58,32 @@ export function PlayerSection() {
   }, []);
 
   useEffect(() => {
+    const element = playerSectionRef.current;
+    if (!element) return;
+
+    const observer = new IntersectionObserver(
+      ([entry]) => setIsPlayerVisible(entry.isIntersecting),
+      { threshold: 0.1 },
+    );
+
+    observer.observe(element);
+    return () => observer.disconnect();
+  }, []);
+
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      setIsPageVisible(!document.hidden);
+    };
+
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+    return () => {
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!isPlayerVisible || !isPageVisible || !isPlaying) return;
+
     let active = true;
 
     const fetchNowPlaying = async () => {
@@ -74,7 +105,7 @@ export function PlayerSection() {
       active = false;
       window.clearInterval(interval);
     };
-  }, []);
+  }, [isPlayerVisible, isPageVisible, isPlaying]);
 
   const togglePlayback = async () => {
     const audio = audioRef.current;
@@ -131,6 +162,7 @@ export function PlayerSection() {
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
           transition={{ delay: 0.2 }}
+          ref={playerSectionRef}
           className="relative rounded-3xl overflow-hidden border border-[rgba(26,19,12,0.3)] shadow-[0_20px_50px_rgba(26,19,12,0.35)] bg-[#0a0805]"
         >
           {/* Topo: Slideshow de Imagens */}
