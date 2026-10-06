@@ -1,0 +1,58 @@
+name: Sync client repository
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: sync-client-repository
+  cancel-in-progress: true
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout source repository
+        uses: actions/checkout@v4
+        with:
+          path: source
+
+      - name: Checkout client repository
+        uses: actions/checkout@v4
+        with:
+          repository: dougdeva7/sertanejo-studio
+          token: ${{ secrets.CLIENT_DEPLOY_TOKEN }}
+          ref: main
+          path: deploy
+
+      - name: Sync project files
+        run: |
+          rsync -a --delete \
+            --exclude='.git/' \
+            --exclude='.github/workflows/' \
+            source/ deploy/
+
+      - name: Commit and push
+        working-directory: deploy
+        env:
+          SOURCE_SHA: ${{ github.sha }}
+        run: |
+          git config user.name "dougdeva7"
+          git config user.email "dougdev@a7fm.com.br"
+
+          git add -A
+
+          if git diff --cached --quiet; then
+            echo "No changes to sync."
+            exit 0
+          fi
+
+          SHORT_SHA="${SOURCE_SHA:0:7}"
+          git commit -m "deploy: sync source ${SHORT_SHA}"
+          git push origin main
