@@ -14,104 +14,14 @@ const images = [hero1, hero2, hero3, hero4, hero5, hero6];
 
 export function PlayerSection() {
   const [current, setCurrent] = useState(0);
-  return () => clearInterval(timer);
-  }, []);
 
   useEffect(() => {
-    const audio = audioRef.current;
-    if (!audio) return;
+    const timer = window.setInterval(() => {
+      setCurrent((prev) => (prev + 1) % images.length);
+    }, 4000);
 
-    const onPlaying = () => {
-      setIsPlaying(true);
-      setIsLoading(false);
-    };
-    const onPause = () => {
-      setIsPlaying(false);
-      setIsLoading(false);
-    };
-
-    audio.addEventListener("playing", onPlaying);
-    audio.addEventListener("pause", onPause);
-    audio.addEventListener("error", onPause);
-
-    return () => {
-      audio.removeEventListener("playing", onPlaying);
-      audio.removeEventListener("pause", onPause);
-      audio.removeEventListener("error", onPause);
-    };
+    return () => window.clearInterval(timer);
   }, []);
-
-  useEffect(() => {
-    const element = playerSectionRef.current;
-    if (!element) return;
-
-    const observer = new IntersectionObserver(
-      ([entry]) => setIsPlayerVisible(entry.isIntersecting),
-      { threshold: 0.1 },
-    );
-
-    observer.observe(element);
-    return () => observer.disconnect();
-  }, []);
-
-  useEffect(() => {
-    const handleVisibilityChange = () => {
-      setIsPageVisible(!document.hidden);
-    };
-
-    document.addEventListener("visibilitychange", handleVisibilityChange);
-    return () => {
-      document.removeEventListener("visibilitychange", handleVisibilityChange);
-    };
-  }, []);
-
-  useEffect(() => {
-    if (!isPlayerVisible || !isPageVisible || !isPlaying) return;
-
-    let active = true;
-
-    const fetchNowPlaying = async () => {
-      try {
-        const response = await fetch("/api/now-playing", { cache: "no-store" });
-        if (!response.ok) return;
-
-        const data = (await response.json()) as { songtitle?: string };
-        if (active && data.songtitle) setSongTitle(data.songtitle);
-      } catch {
-        // Metadata is optional; the stream continues even if stats fail.
-      }
-    };
-
-    fetchNowPlaying();
-    const interval = window.setInterval(fetchNowPlaying, 30000);
-
-    return () => {
-      active = false;
-      window.clearInterval(interval);
-    };
-  }, [isPlayerVisible, isPageVisible, isPlaying]);
-
-  const togglePlayback = async () => {
-    const audio = audioRef.current;
-    if (!audio) return;
-
-    if (!audio.paused) {
-      audio.pause();
-      return;
-    }
-
-    setIsLoading(true);
-    try {
-      await audio.play();
-    } catch {
-      setIsLoading(false);
-    }
-  };
-
-  const changeVolume = (nextVolume: number) => {
-    setVolume(nextVolume);
-    if (audioRef.current) audioRef.current.volume = nextVolume / 100;
-  };
 
   return (
     <SectionWrapper id="player" tone="wood" glow className="pt-24 pb-20">
