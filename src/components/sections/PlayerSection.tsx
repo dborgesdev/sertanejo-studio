@@ -68,7 +68,7 @@ export function PlayerSection() {
     };
 
     fetchNowPlaying();
-    const interval = window.setInterval(fetchNowPlaying, 10000);
+    const interval = window.setInterval(fetchNowPlaying, 30000);
 
     return () => {
       active = false;
@@ -180,10 +180,10 @@ export function PlayerSection() {
                 onClick={togglePlayback}
                 disabled={isLoading}
                 aria-label={isPlaying ? "Pausar transmissão" : "Ouvir Sertanejo FM"}
-                className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-[#e9ad46] text-[#1a130c] transition-transform hover:scale-105 disabled:cursor-wait disabled:opacity-70 sm:h-14 sm:w-14"
+                className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-[#e9ad46] text-coffee-medium transition-transform hover:scale-105 disabled:cursor-wait disabled:opacity-70 sm:h-14 sm:w-14"
               >
                 {isLoading ? (
-                  <span className="h-5 w-5 animate-spin rounded-full border-2 border-[#1a130c]/20 border-t-[#1a130c]" />
+                  <span className="h-5 w-5 animate-spin rounded-full border-2 border-coffee-medium/20 border-t-coffee-medium" />
                 ) : isPlaying ? (
                   <Pause className="h-5 w-5 fill-current sm:h-6 sm:w-6" />
                 ) : (
